@@ -12,7 +12,6 @@ import { ProjectSelectModule } from '../app/shared/project-select';
 import { FormComponent } from '../app/wizard/wizard.component';
 import { DeployComponent } from '../app/wizard/deploy/deploy.component';
 import { ForgeService } from '../app/shared/forge.service';
-import { Config } from '../app/shared/config.component';
 import { Gui } from '../app/shared/model';
 
 
@@ -109,7 +108,6 @@ describe('Dynamic form should be created for json that comes from the server', (
       declarations: [FormComponent, DeployComponent],
       providers: [
         ForgeService,
-        { provide: Config, useValue: { get: (key: string) => { } } },
         {
           provide: ActivatedRoute, useValue: {
             params: {

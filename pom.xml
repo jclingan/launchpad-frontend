@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  JBoss, Home of Professional Open Source
+  Copyright Red Hat, Inc., and individual contributors
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>io.openshift.launchpad</groupId>
+    <artifactId>launchpad-frontend</artifactId>
+    <packaging>war</packaging>
+    <name>Frontend UI</name>
+    <version>1.0.0-SNAPSHOT</version>
+
+   <dependencyManagement>
+      <dependencies>
+         <dependency>
+            <groupId>org.wildfly.swarm</groupId>
+            <artifactId>bom-all</artifactId>
+            <version>${wildfly.swarm.version}</version>
+            <scope>import</scope>
+            <type>pom</type>
+         </dependency>
+       </dependencies>
+    </dependencyManagement>
+    <properties>
+      <maven.compiler.target>1.8</maven.compiler.target>
+      <maven.compiler.source>1.8</maven.compiler.source>
+
+      <failOnMissingWebXml>false</failOnMissingWebXml>
+      <wildfly.swarm.version>2017.3.3</wildfly.swarm.version>
+      <fabric8.maven.plugin.version>3.1.92</fabric8.maven.plugin.version>
+    </properties>
+    <build>
+        <finalName>${project.artifactId}</finalName>
+        <plugins>
+            <!-- Download node.js and related modules to install 3rd party frontend libraries -->
+            <plugin>
+                <groupId>com.github.eirslett</groupId>
+                <artifactId>frontend-maven-plugin</artifactId>
+                <version>0.0.26</version>
+
+                <configuration>
+                    <workingDirectory>./</workingDirectory>
+                </configuration>
+
+                <executions>
+                    <execution>
+                        <id>install node and npm</id>
+                        <goals>
+                            <goal>install-node-and-npm</goal>
+                        </goals>
+                        <phase>generate-resources</phase>
+                        <configuration>
+                            <nodeVersion>v6.10.0</nodeVersion>
+                            <npmVersion>4.0.2</npmVersion>
+                        </configuration>
+                    </execution>
+
+                    <execution>
+                        <id>npm install</id>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <phase>generate-resources</phase>
+                        <configuration>
+                            <arguments>install</arguments>
+                        </configuration>
+                    </execution>
+
+                    <execution>
+                        <id>npm run build:prod</id>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <phase>generate-resources</phase>
+                        <configuration>
+                            <arguments>run build:prod</arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.6.0</version>
+                <executions>
+                    <execution>
+                    <id>Enable keycloak dynamically</id>
+                    <phase>generate-sources</phase>
+                    <goals>
+                        <goal>exec</goal>
+                    </goals>
+                    <configuration>
+                        <executable>${basedir}/scripts/entrypoint.sh</executable>
+                    </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.wildfly.swarm</groupId>
+                <artifactId>wildfly-swarm-plugin</artifactId>
+                <version>${wildfly.swarm.version}</version>
+                <executions>
+                <execution>
+                    <goals>
+                        <goal>package</goal>
+                    </goals>
+                </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.0.0</version>
+                <configuration>
+                <webResources>
+                    <resource>
+                        <directory>config</directory>
+                        <include>web.xml</include>
+                        <targetPath>WEB-INF</targetPath>
+                    </resource>
+                </webResources>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.wildfly.swarm</groupId>
+            <artifactId>topology-webapp</artifactId>
+        </dependency>
+    </dependencies>
+
+    <profiles>
+        <profile>
+            <id>normal</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>org.wildfly.swarm</groupId>
+                    <artifactId>topology-jgroups</artifactId>
+                </dependency>
+            </dependencies>
+        </profile>
+        <profile>
+            <id>openshift</id>
+            <build>
+                <plugins>
+                <plugin>
+                    <groupId>io.fabric8</groupId>
+                    <artifactId>fabric8-maven-plugin</artifactId>
+                    <version>${fabric8.maven.plugin.version}</version>
+                    <configuration>
+                        <generator>
+                            <includes>
+                            <include>wildfly-swarm</include>
+                            </includes>
+                        </generator>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <goals>
+                            <goal>resource</goal>
+                            <goal>build</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+                </plugins>
+            </build>
+            <dependencies>
+                <dependency>
+                    <groupId>org.wildfly.swarm</groupId>
+                    <artifactId>topology-openshift</artifactId>
+                </dependency>
+            </dependencies>
+        </profile>
+        <profile>
+            <!--
+                Clears all cached Node/NPM/Bower artifacts makes completely fresh build
+
+                usage: mvn clean install -Dfrontend.clean.force
+            -->
+            <id>frontend-forced-clean</id>
+            <activation>
+                <property>
+                    <name>frontend.clean.force</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-clean-plugin</artifactId>
+                        <version>2.5</version>
+                        <configuration>
+                            <filesets>
+                                <fileset>
+                                    <directory>./</directory>
+                                    <includes>
+                                        <include>dist/**</include>
+                                        <include>.tmp/**</include>
+                                        <include>.build-tmp/**</include>
+                                        <include>node/**</include>
+                                        <include>node_modules/**</include>
+                                        <include>node_tmp/**</include>
+                                        <include>app/bower_components/**</include>
+                                    </includes>
+                                    <followSymlinks>false</followSymlinks>
+                                </fileset>
+                            </filesets>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+</project>

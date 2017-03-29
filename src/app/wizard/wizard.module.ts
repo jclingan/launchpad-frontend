@@ -7,7 +7,6 @@ import { VersionComponent } from './versions/versions.component';
 import { FormComponent } from './wizard.component';
 import { DeployComponent } from './deploy/deploy.component';
 import { ForgeService } from '../shared/forge.service';
-import { Config } from '../shared/config.component';
 
 import { KeycloakService } from '../shared/keycloak.service';
 import { KEYCLOAK_HTTP_PROVIDER } from '../shared/keycloak.http';
@@ -31,9 +30,7 @@ import { ProjectSelectModule } from '../shared/project-select';
   providers: [
     KeycloakService,
     KEYCLOAK_HTTP_PROVIDER,
-    ForgeService,
-    Config,
-    { provide: APP_INITIALIZER, useFactory: (config: Config) => () => config.load(), deps: [Config], multi: true }
+    ForgeService
   ]
 })
 export class WizardModule { }

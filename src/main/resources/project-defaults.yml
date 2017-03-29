@@ -1,0 +1,6 @@
+swarm:
+   topology:
+      web-app:
+         proxied-service-mappings:
+            backend: /backend
+            missioncontrol: /missioncontrol

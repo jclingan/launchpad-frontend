@@ -2,15 +2,14 @@ import { Injectable } from '@angular/core';
 import 'rxjs/add/operator/toPromise';
 import { Headers, Http, Request, RequestOptions, RequestMethod, ResponseContentType } from '@angular/http';
 import { Gui, DownloadFile, SubmittableInput, Input, Version } from './model';
-import { Config } from './config.component'
 
 @Injectable()
 export class ForgeService {
   private apiUrl: string = process.env.BACKEND_URL;
 
-  constructor(private http: Http, private config: Config) {
+  constructor(private http: Http) {
     if (!this.apiUrl) {
-      this.apiUrl = config.get('backend_url');
+      this.apiUrl = '/backend';
     }
 
     if (this.apiUrl && this.apiUrl[this.apiUrl.length - 1] != '/') {
