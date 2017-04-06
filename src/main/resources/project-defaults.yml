@@ -1,7 +1,11 @@
 swarm:
+   logging:
+      root-logger:
+        level: DEBUG
    topology:
       web-app:
          expose-topology-endpoint: false
          proxied-service-mappings:
             launchpad-backend: /backend
             launchpad-missioncontrol: /missioncontrol
+
