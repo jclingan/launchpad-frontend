@@ -1,6 +1,7 @@
 swarm:
    topology:
       web-app:
+         expose-topology-endpoint: false
          proxied-service-mappings:
-            backend: /backend
-            missioncontrol: /missioncontrol
+            launchpad-backend: /backend
+            launchpad-missioncontrol: /missioncontrol
