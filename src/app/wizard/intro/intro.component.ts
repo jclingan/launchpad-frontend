@@ -9,7 +9,11 @@ import { Router } from '@angular/router';
 export class IntroComponent {
   constructor(private router: Router) {}
 
+  appdevSite() {
+    window.location.href = 'http://appdev.openshift.io';
+  }
+
   launch() {
-    this.router.navigate(['/wizard', "launchpad-new-project", 1, "eyJpbnB1dHMiOltdfQ=="]);
+      this.router.navigate(['/wizard', "launchpad-new-project", 1, "eyJpbnB1dHMiOltdfQ=="]);
   }
 }
